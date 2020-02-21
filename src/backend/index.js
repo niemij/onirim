@@ -1,4 +1,4 @@
-const { includes } = require("ramda");
+const { includes, map, propEq } = require("ramda");
 
 const RED = "Red"; // observatory
 const BLUE = "Blue"; // aquarium
@@ -425,10 +425,12 @@ const drawCard = () => {
     if (card.type === NIGHTMARE) handleNightmare();
     else addToLimbo(card);
     addToHand(card);
+    return card
 };
 
 const checkHandForMatchingKey = wantedKey => includes(wantedKey, hand);
-const searchDeckForDoor = wantedDoor => includes(wantedDoor, library);
+const searchLibraryForSpecificDoor = wantedDoor => includes(wantedDoor, library);
+
 
 const addToLimbo = card => {
     limbo.push(card);
@@ -446,7 +448,7 @@ const playCard = () => {
 
 const openDoor = door => {
     // check that not all doors are open
-    searchDeckForDoor(door, library);
+    searchLibraryForSpecificDoor(door, library);
     openedDoors.push(door);
 };
 
@@ -483,56 +485,57 @@ const prophecy = () => {
     // select card to put on top of library until all is put back
 };
 
-const refillHand = () => {
-    // until hand.length === 5
-    drawCard();
-    // if(special) -> limbo
-    shuffleLimboIntoLibrary()
-};
+drawFullHand()
 
-const shuffleLimboIntoLibrary = () => {
+const shuffleLimboIntoLibrary = ({ limbo, library }) => {
     library.push(limbo)
     shuffleLibrary()
+    return library
 }
 
-const handleNightmare = () => {
-    checkForKeys()
+const handleNightmare = hand => {
+    checkForKeysInHand(hand)
     // trigger options: discardKey, discardHand, discardFiveFromLibrary
 };
 
-const checkForKeys = () => {
+const checkForKeysInHand = hand => {
     // get all keys in hand
 }
 
 const discardHand = hand => {
-    // while hand.length > 0
-    discardCard(card);
-    // refillHand
+    discardPile.push(hand)
+    return discardPile
 };
 
-// pick key to discard
+// pick key to discard to handle nightmare
 const discardKey = key => {
     // add key to discard
     // handSize < 5 -> drawCard
 };
 
-const moveToDiscard = card => {
+const moveToDiscard = ({ card, discardPile }) => {
     discardPile.unshift(card);
+    return discardPile
 };
 
-const discardFiveFromLibrary = () => {
+const discardFiveFromLibrary = ({ library, discardPile }) => {
     let n = 0;
     do {
         const card = library.shift;
-        moveToDiscard(card);
+        moveToDiscard(card, discardPile);
     } while (n < 5);
+    return { library, discardPile }
 };
 
-const checkIfLastCard = () => {
+const checkIfLastCard = library => {
     if (library.length < 1) console.log("😵 You lose! 😵");
 };
 
 const checkIfAllDoorAreOpen = () => {
     // check number of doors in library
+    const isDoor = propEq('type', 'Door');
+    const allClosedDoors = map(isDoor, library)
+
+
     if (openedDoors.length === 8) console.log("🥳 You win! 🥳");
 };
